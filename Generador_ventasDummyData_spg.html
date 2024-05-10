@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Script SQL para Dummy Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        script {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Generador de Script SQL para Dummy Data</h1>
+
+    <form id="dataForm" onsubmit="generateScript(event)">
+        <label for="numRowsVentas">Cantidad de Datos Dummy para Ventas:</label>
+        <input type="number" id="numRowsVentas" name="numRowsVentas" min="1" required>
+        <label for="numRowsVentasDetalles">Cantidad de Datos Dummy para Ventas Detalles:</label>
+        <input type="number" id="numRowsVentasDetalles" name="numRowsVentasDetalles" min="1" required>
+        <button type="submit">Generar Script SQL</button>
+        <button onclick="generateJSON()">Generar JSON</button>
+    <button onclick="generateCSV()">Generar CSV</button>
+
+    </form>
+
+
+    <script>
+        function generateScript(event) {
+            event.preventDefault();
+            var numRowsVentas = document.getElementById('numRowsVentas').value;
+            var numRowsVentasDetalles = document.getElementById('numRowsVentasDetalles').value;
+            var script = "CREATE DATABASE IF NOT EXISTS punto_venta_prueba3;\n" +
+                         "USE punto_venta_prueba3;\n" +
+                         "CREATE TABLE IF NOT EXISTS `productos` (\n" +
+                         "\t`codigo` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,\n" +
+                         "\t`nombre` VARCHAR(255) NOT NULL,\n" +
+                         "\t`precio` FLOAT(9,2) UNSIGNED NOT NULL,\n" +
+                         "\t`descripcion` VARCHAR(255) DEFAULT 'Sin descripcion',\n" +
+                         "\tUNIQUE KEY `codigo` (`codigo`)\n" +
+                         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;\n" +
+                         "CREATE TABLE IF NOT EXISTS `ventas` (\n" +
+                         "\t`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,\n" +
+                         "\t`fecha` DATE,\n" +
+                         "\t`hora` TIME\n" +
+                         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;\n" +
+                         "CREATE TABLE IF NOT EXISTS `ventas_detalles` (\n" +
+                         "\t`id_ventas` INT UNSIGNED NOT NULL,\n" +
+                         "\t`id_producto` INT UNSIGNED NOT NULL,\n" +
+                         "\t`precio` FLOAT(9,2) UNSIGNED NOT NULL,\n" +
+                         "\t`detalles` VARCHAR(255),\n" +
+                         "\tFOREIGN KEY (`id_ventas`) REFERENCES `ventas`(`id`),\n" +
+                         "\tFOREIGN KEY (`id_producto`) REFERENCES `productos`(`codigo`)\n" +
+                         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;\n" +
+                         "DELETE FROM ventas;\n" +
+                         "DELETE FROM ventas_detalles;\n" +
+                         "DELETE FROM productos;\n" +
+                         "INSERT INTO ventas(fecha, hora) VALUES\n";
+
+            for (var i = 0; i < numRowsVentas; i++) {
+                var fecha = randomDate(new Date(2020, 0, 1), new Date());
+                var hora = randomTime();
+
+                script += "\t('" + fecha + "', '" + hora + "')";
+                if (i < numRowsVentas - 1) {
+                    script += ",\n";
+                }
+            }
+
+            script += ";\nINSERT INTO productos(nombre, precio, descripcion) VALUES\n";
+
+            // Lista de productos
+            var productos = [
+                { nombre: 'Producto 1', precio: 10.00, descripcion: 'Descripción del Producto 1' },
+                { nombre: 'Producto 2', precio: 20.00, descripcion: 'Descripción del Producto 2' },
+                { nombre: 'Producto 3', precio: 30.00, descripcion: 'Descripción del Producto 3' },
+                { nombre: 'Producto 4', precio: 40.00, descripcion: 'Descripción del Producto 4' },
+                { nombre: 'Producto 5', precio: 50.00, descripcion: 'Descripción del Producto 5' },
+                { nombre: 'Producto 6', precio: 60.00, descripcion: 'Descripción del Producto 6' },
+                { nombre: 'Producto 7', precio: 70.00, descripcion: 'Descripción del Producto 7' },
+                { nombre: 'Producto 8', precio: 80.00, descripcion: 'Descripción del Producto 8' },
+                { nombre: 'Producto 9', precio: 90.00, descripcion: 'Descripción del Producto 9' },
+                { nombre: 'Producto 10', precio: 100.00, descripcion: 'Descripción del Producto 10' }
+            ];
+
+            for (var j = 0; j < productos.length; j++) {
+                var producto = productos[j];
+
+                script += "\t('" + producto.nombre + "', " + producto.precio + ", '" + producto.descripcion + "')";
+                if (j < productos.length - 1) {
+                    script += ",\n";
+                }
+            }
+
+            script += ";\nINSERT INTO ventas_detalles(id_ventas, id_producto, precio, detalles) VALUES\n";
+
+            var idVenta = 1; // Inicializamos el id de venta en 1
+            for (var k = 0; k < numRowsVentasDetalles; k++) {
+                var idProducto = Math.floor(Math.random() * productos.length) + 1; // Id de producto aleatorio entre 1 y 10
+                var precio = productos[idProducto - 1].precio; // Precio del producto
+                var detalles = 'Detalles del producto ' + idProducto;
+
+                script += "\t(" + idVenta + ", " + idProducto + ", " + precio + ", '" + detalles + "')";
+
+                idVenta++; // Incrementamos el id de venta para el siguiente detalle
+                if (k < numRowsVentasDetalles - 1) {
+                    script += ",\n";
+                }
+            }
+
+            script += ";\n";
+
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(script));
+            element.setAttribute('download', 'dummy_data_script.sql');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        function generateJSON() {
+            var numRowsVentas = document.getElementById('numRowsVentas').value;
+            var numRowsVentasDetalles = document.getElementById('numRowsVentasDetalles').value;
+
+            var ventasData = [];
+            for (var i = 0; i < numRowsVentas; i++) {
+                var fecha = randomDate(new Date(2020, 0, 1), new Date());
+                var hora = randomTime();
+
+                ventasData.push({
+                    fecha: fecha,
+                    hora: hora
+                });
+            }
+
+            var ventasDetallesData = [];
+            for (var j = 0; j < numRowsVentasDetalles; j++) {
+                var idProducto = Math.floor(Math.random() * 10) + 1; // Id de producto aleatorio entre 1 y 10
+                var precio = Math.floor(Math.random() * 100) + 1; // Precio aleatorio entre 1 y 100
+                var detalles = 'Detalles del producto ' + idProducto;
+
+                ventasDetallesData.push({
+                    id_ventas: j + 1,
+                    id_producto: idProducto,
+                    precio: precio,
+                    detalles: detalles
+                });
+            }
+
+            var ventasJSON = JSON.stringify(ventasData, null, 2);
+            var ventasDetallesJSON = JSON.stringify(ventasDetallesData, null, 2);
+
+            // Descarga del archivo JSON
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(ventasJSON));
+            element.setAttribute('download', 'ventas_data.json');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+
+            var elementDetalles = document.createElement('a');
+            elementDetalles.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(ventasDetallesJSON));
+            elementDetalles.setAttribute('download', 'ventas_detalles_data.json');
+            elementDetalles.style.display = 'none';
+            document.body.appendChild(elementDetalles);
+            elementDetalles.click();
+            document.body.removeChild(elementDetalles);
+        }
+
+        function generateCSV() {
+            var numRowsVentas = document.getElementById('numRowsVentas').value;
+            var numRowsVentasDetalles = document.getElementById('numRowsVentasDetalles').value;
+
+            var ventasCSV = 'fecha,hora\n';
+            for (var i = 0; i < numRowsVentas; i++) {
+                var fecha = randomDate(new Date(2020, 0, 1), new Date());
+                var hora = randomTime();
+
+                ventasCSV += fecha + ',' + hora + '\n';
+            }
+
+            var ventasDetallesCSV = 'id_ventas,id_producto,precio,detalles\n';
+            for (var j = 0; j < numRowsVentasDetalles; j++) {
+                var idProducto = Math.floor(Math.random() * 10) + 1; // Id de producto aleatorio entre 1 y 10
+                var precio = Math.floor(Math.random() * 100) + 1; // Precio aleatorio entre 1 y 100
+                var detalles = 'Detalles del producto ' + idProducto;
+
+                ventasDetallesCSV += (j + 1) + ',' + idProducto + ',' + precio + ',"' + detalles + '"\n';
+            }
+
+            // Descarga del archivo CSV
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(ventasCSV));
+            element.setAttribute('download', 'ventas_data.csv');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+
+            var elementDetalles = document.createElement('a');
+            elementDetalles.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(ventasDetallesCSV));
+            elementDetalles.setAttribute('download', 'ventas_detalles_data.csv');
+            elementDetalles.style.display = 'none';
+            document.body.appendChild(elementDetalles);
+            elementDetalles.click();
+            document.body.removeChild(elementDetalles);
+        }
+
+        function randomDate(start, end) {
+            return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime())).toISOString().slice(0, 10);
+        }
+
+        function randomTime() {
+            var hh = String(Math.floor(Math.random() * 24)).padStart(2, '0');
+            var mm = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+            var ss = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+            return hh + ':' + mm + ':' + ss;
+        }
+    </script>
+</body>
+</html>
